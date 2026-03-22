@@ -10,27 +10,27 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 - [ ] **Configure package.json fields** — Add `"bin": { "llm-response-cache": "dist/cli.js" }` to package.json for CLI support. Verify `"main"`, `"types"`, `"files"`, and `"engines"` fields are correct. Ensure `"prepublishOnly": "npm run build"` is present in scripts. | Status: not_done
 
-- [ ] **Define all TypeScript types** — Create `src/types.ts` with all type definitions: `ResponseCacheOptions`, `CacheEntry`, `CacheHit`, `CacheStats`, `CacheableResponse`, `RequestParams`, `MessageInput` (supporting OpenAI-style message arrays and Anthropic-style objects), `StorageBackend` interface (with `get`, `set`, `delete`, `clear`, `query`, `update`, `size`, `sizeByModel`, optional `flush`, optional `close`), `WrapOptions` (with `streamReplay`, `streamReplaySpeed`, `clientType`, `extractParams`, `buildResponse`), `ModelPrice` type, and eviction policy types. | Status: not_done
+- [x] **Define all TypeScript types** — Create `src/types.ts` with all type definitions: `ResponseCacheOptions`, `CacheEntry`, `CacheHit`, `CacheStats`, `CacheableResponse`, `RequestParams`, `MessageInput` (supporting OpenAI-style message arrays and Anthropic-style objects), `StorageBackend` interface (with `get`, `set`, `delete`, `clear`, `query`, `update`, `size`, `sizeByModel`, optional `flush`, optional `close`), `WrapOptions` (with `streamReplay`, `streamReplaySpeed`, `clientType`, `extractParams`, `buildResponse`), `ModelPrice` type, and eviction policy types. | Status: done
 
-- [ ] **Set up public API exports** — Update `src/index.ts` to export `createCache`, the `ResponseCache` class (for `deserialize` static method access), and all public types from `types.ts`. | Status: not_done
+- [x] **Set up public API exports** — Update `src/index.ts` to export `createCache`, the `ResponseCache` class (for `deserialize` static method access), and all public types from `types.ts`. | Status: done
 
 ---
 
 ## Phase 2: Cache Key Construction and Normalization
 
-- [ ] **Implement message normalization** — Create `src/normalize.ts` with functions to normalize message content: apply Unicode NFC normalization to `content` fields, trim leading/trailing whitespace from `content` fields, preserve `role` fields exactly, preserve message order, handle multi-part content arrays (normalize text parts individually, include image parts by URL or content hash). Support both OpenAI-style message arrays and Anthropic-style objects with `system` field. | Status: not_done
+- [x] **Implement message normalization** — Create `src/normalize.ts` with functions to normalize message content: apply Unicode NFC normalization to `content` fields, trim leading/trailing whitespace from `content` fields, preserve `role` fields exactly, preserve message order, handle multi-part content arrays (normalize text parts individually, include image parts by URL or content hash). Support both OpenAI-style message arrays and Anthropic-style objects with `system` field. | Status: done
 
-- [ ] **Implement parameter normalization** — In `src/normalize.ts`, add functions to normalize request parameters: convert model name to lowercase, normalize numeric parameters (`temperature`, `top_p`, `max_tokens`, `frequency_penalty`, `presence_penalty`, `seed`) to canonical numeric representations (e.g., `0` and `0.0` produce the same value), remove `undefined`/`null` fields, strip output-irrelevant parameters (`stream`, `stream_options`, `n`, `user`, `api_key`, `timeout`, `request_id`, `idempotency_key`, `organization`). | Status: not_done
+- [x] **Implement parameter normalization** — In `src/normalize.ts`, add functions to normalize request parameters: convert model name to lowercase, normalize numeric parameters (`temperature`, `top_p`, `max_tokens`, `frequency_penalty`, `presence_penalty`, `seed`) to canonical numeric representations (e.g., `0` and `0.0` produce the same value), remove `undefined`/`null` fields, strip output-irrelevant parameters (`stream`, `stream_options`, `n`, `user`, `api_key`, `timeout`, `request_id`, `idempotency_key`, `organization`). | Status: done
 
-- [ ] **Implement canonicalization** — In `src/normalize.ts`, add a `canonicalize(messages, model, params)` function that extracts output-affecting parameters, applies all normalization steps, and serializes the result as JSON with keys sorted alphabetically at every level of nesting. Ensure deterministic output regardless of input property order. | Status: not_done
+- [x] **Implement canonicalization** — In `src/normalize.ts`, add a `canonicalize(messages, model, params)` function that extracts output-affecting parameters, applies all normalization steps, and serializes the result as JSON with keys sorted alphabetically at every level of nesting. Ensure deterministic output regardless of input property order. | Status: done
 
 - [ ] **Implement optional prompt normalizer hook** — In `src/normalize.ts`, support an optional `normalizer` function (e.g., from `prompt-dedup`) that is applied to message content before canonicalization. This increases exact-match hit rates for prompts differing only in formatting. | Status: not_done
 
-- [ ] **Implement cache key hashing** — Create `src/key.ts` with a `computeCacheKey(messages, model, params, normalizer?)` function that calls `canonicalize()` on the inputs and then computes `SHA-256` using `node:crypto`. Return the hash as a lowercase hex string (64 characters). | Status: not_done
+- [x] **Implement cache key hashing** — Create `src/key.ts` with a `computeCacheKey(messages, model, params, normalizer?)` function that calls `canonicalize()` on the inputs and then computes `SHA-256` using `node:crypto`. Return the hash as a lowercase hex string (64 characters). | Status: done
 
 - [ ] **Write normalize.test.ts** — Create `src/__tests__/normalize.test.ts`. Test cases: JSON key sorting at multiple nesting levels, whitespace trimming in message content, Unicode NFC normalization (composed vs decomposed sequences produce same output), handling of `undefined`/`null` parameters (treated as absent), numeric normalization (`0` vs `0.0`), model name lowercase conversion, multi-part content normalization, Anthropic-style message format normalization, excluded parameters are stripped (`stream`, `user`, `api_key`, etc.), `temperature: undefined` and omitted `temperature` produce the same canonical form, `temperature: 1` and omitted `temperature` produce different canonical forms. | Status: not_done
 
-- [ ] **Write key.test.ts** — Create `src/__tests__/key.test.ts`. Test cases: identical requests produce the same key, requests differing in any output-affecting parameter produce different keys, requests differing only in non-output-affecting parameters (`stream`, `user`, `api_key`) produce the same key, key is a 64-character lowercase hex string, determinism across repeated calls, different property order produces the same key (`{ model: "gpt-4o", temperature: 0 }` and `{ temperature: 0, model: "gpt-4o" }` match), known input-output SHA-256 pairs for verification. | Status: not_done
+- [x] **Write key.test.ts** — Create `src/__tests__/key.test.ts`. Test cases: identical requests produce the same key, requests differing in any output-affecting parameter produce different keys, requests differing only in non-output-affecting parameters (`stream`, `user`, `api_key`) produce the same key, key is a 64-character lowercase hex string, determinism across repeated calls, different property order produces the same key (`{ model: "gpt-4o", temperature: 0 }` and `{ temperature: 0, model: "gpt-4o" }` match), known input-output SHA-256 pairs for verification. | Status: done
 
 ---
 
@@ -38,9 +38,9 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 - [ ] **Define StorageBackend interface** — Create `src/storage/backend.ts` exporting the `StorageBackend` interface with methods: `get(key)`, `set(entry)`, `delete(key)`, `clear(options?)`, `query(filter)` (for model-version invalidation queries), `update(filter, update)` (for soft invalidation), `size()`, `sizeByModel()`, optional `flush()`, optional `close()`. | Status: not_done
 
-- [ ] **Implement in-memory storage backend** — Create `src/storage/memory.ts` implementing `StorageBackend`. Use a `Map<string, CacheEntry>` for entry storage. Implement all interface methods. `query` and `update` iterate over the map and filter/update matching entries by model, modelVersion, and stale flag. | Status: not_done
+- [x] **Implement in-memory storage backend** — Create `src/storage/memory.ts` implementing `StorageBackend`. Use a `Map<string, CacheEntry>` for entry storage. Implement all interface methods. `query` and `update` iterate over the map and filter/update matching entries by model, modelVersion, and stale flag. | Status: done
 
-- [ ] **Implement LRU doubly-linked list in memory backend** — Add a doubly-linked list to the in-memory backend for LRU eviction ordering. On `get` (cache hit), promote the entry to the head of the list. On eviction (when `maxEntries` is reached during `set`), remove from the tail. Achieve O(1) for promotion, eviction, and removal. | Status: not_done
+- [x] **Implement LRU doubly-linked list in memory backend** — Add a doubly-linked list to the in-memory backend for LRU eviction ordering. On `get` (cache hit), promote the entry to the head of the list. On eviction (when `maxEntries` is reached during `set`), remove from the tail. Achieve O(1) for promotion, eviction, and removal. | Status: done
 
 - [ ] **Implement storage factory** — Create a factory function in `src/storage/` that takes the `storage` option from `ResponseCacheOptions` and returns the appropriate `StorageBackend` instance. Handle: string `'memory'`, object `{ type: 'memory' }`, object `{ type: 'sqlite', ... }`, object `{ type: 'filesystem', ... }`, object `{ type: 'redis', ... }`, and custom `StorageBackend` instances passed directly. | Status: not_done
 
@@ -50,9 +50,9 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 4: Eviction Policies
 
-- [ ] **Implement TTL eviction logic** — Create `src/eviction.ts` with TTL checking. On cache get, check if `entry.createdAt + (entry.ttl ?? globalTtl) < Date.now()`. If expired, treat as a miss and schedule the entry for deletion. Support per-entry TTL (via `cache.set` options) overriding the global TTL. | Status: not_done
+- [x] **Implement TTL eviction logic** — Create `src/eviction.ts` with TTL checking. On cache get, check if `entry.createdAt + (entry.ttl ?? globalTtl) < Date.now()`. If expired, treat as a miss and schedule the entry for deletion. Support per-entry TTL (via `cache.set` options) overriding the global TTL. | Status: done
 
-- [ ] **Implement LRU eviction logic** — In `src/eviction.ts`, add LRU eviction logic. When a new entry is added and `maxEntries` is reached, identify and remove the least recently accessed entry. Integrate with the in-memory backend's doubly-linked list for O(1) eviction. For other backends, delegate eviction via backend-specific queries (e.g., SQLite `DELETE ... ORDER BY accessed_at ASC LIMIT ?`). | Status: not_done
+- [x] **Implement LRU eviction logic** — In `src/eviction.ts`, add LRU eviction logic. When a new entry is added and `maxEntries` is reached, identify and remove the least recently accessed entry. Integrate with the in-memory backend's doubly-linked list for O(1) eviction. For other backends, delegate eviction via backend-specific queries (e.g., SQLite `DELETE ... ORDER BY accessed_at ASC LIMIT ?`). | Status: done
 
 - [ ] **Implement model-version-based eviction priority** — In `src/eviction.ts`, add logic so that entries flagged as stale (from superseded model versions) are evicted preferentially before non-stale entries when space is needed. This works with `invalidationStrategy: 'soft'`. | Status: not_done
 
@@ -64,25 +64,25 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 5: Core Cache Logic
 
-- [ ] **Implement ResponseCache class** — Create `src/cache.ts` with the `ResponseCache` class. Constructor accepts `ResponseCacheOptions`, validates options, initializes storage backend via factory, sets defaults (maxEntries: Infinity, evictionPolicy: 'lru', storage: 'memory', invalidationStrategy: 'auto'). Store model prices (built-in defaults merged with user-provided), token estimator (default: `Math.ceil(text.length / 4)`), and optional normalizer. | Status: not_done
+- [x] **Implement ResponseCache class** — Create `src/cache.ts` with the `ResponseCache` class. Constructor accepts `ResponseCacheOptions`, validates options, initializes storage backend via factory, sets defaults (maxEntries: Infinity, evictionPolicy: 'lru', storage: 'memory', invalidationStrategy: 'auto'). Store model prices (built-in defaults merged with user-provided), token estimator (default: `Math.ceil(text.length / 4)`), and optional normalizer. | Status: done
 
-- [ ] **Implement `cache.get(messages, model, params?)`** — In `cache.ts`, implement the `get` method: compute cache key via `computeCacheKey`, look up entry in storage backend, check TTL expiry (return null and delete if expired), check stale flag (if `invalidationStrategy: 'auto'` and entry is stale, return null; if `'soft'`, return with stale info; if `'manual'`, return normally), update `accessedAt` and `hitCount`, increment hit counter in stats, compute cost saved for this hit, return `CacheHit` object. Return `null` on miss (increment miss counter). | Status: not_done
+- [x] **Implement `cache.get(messages, model, params?)`** — In `cache.ts`, implement the `get` method: compute cache key via `computeCacheKey`, look up entry in storage backend, check TTL expiry (return null and delete if expired), check stale flag (if `invalidationStrategy: 'auto'` and entry is stale, return null; if `'soft'`, return with stale info; if `'manual'`, return normally), update `accessedAt` and `hitCount`, increment hit counter in stats, compute cost saved for this hit, return `CacheHit` object. Return `null` on miss (increment miss counter). | Status: done
 
-- [ ] **Implement `cache.set(messages, model, params, response, options?)`** — In `cache.ts`, implement the `set` method: compute cache key, construct `CacheEntry` with key, messages, model, resolvedModel, modelVersion, params, responseText, usage, finishReason, timestamps, TTL (per-entry or global), stale=false, metadata. Trigger model version tracking (check if resolvedModel differs from last known version, handle version change per invalidation strategy). Trigger eviction if maxEntries reached. Store entry in backend. Return the cache key string. | Status: not_done
+- [x] **Implement `cache.set(messages, model, params, response, options?)`** — In `cache.ts`, implement the `set` method: compute cache key, construct `CacheEntry` with key, messages, model, resolvedModel, modelVersion, params, responseText, usage, finishReason, timestamps, TTL (per-entry or global), stale=false, metadata. Trigger model version tracking (check if resolvedModel differs from last known version, handle version change per invalidation strategy). Trigger eviction if maxEntries reached. Store entry in backend. Return the cache key string. | Status: done
 
-- [ ] **Implement `cache.delete(key)`** — In `cache.ts`, implement deletion of a specific cache entry by its SHA-256 key. Return true if the entry existed and was deleted, false otherwise. | Status: not_done
+- [x] **Implement `cache.delete(key)`** — In `cache.ts`, implement deletion of a specific cache entry by its SHA-256 key. Return true if the entry existed and was deleted, false otherwise. | Status: done
 
-- [ ] **Implement `cache.clear(options?)`** — In `cache.ts`, implement clearing all cache entries, optionally filtered by model name. Delegate to the storage backend's `clear` method. | Status: not_done
+- [x] **Implement `cache.clear(options?)`** — In `cache.ts`, implement clearing all cache entries, optionally filtered by model name. Delegate to the storage backend's `clear` method. | Status: done
 
-- [ ] **Implement `cache.has(messages, model, params?)`** — In `cache.ts`, implement existence check: compute cache key, check if entry exists in storage without updating access statistics (no `accessedAt` update, no hit/miss counting). Return boolean. | Status: not_done
+- [x] **Implement `cache.has(messages, model, params?)`** — In `cache.ts`, implement existence check: compute cache key, check if entry exists in storage without updating access statistics (no `accessedAt` update, no hit/miss counting). Return boolean. | Status: done
 
-- [ ] **Implement `cache.invalidate(model?)`** — In `cache.ts`, implement manual invalidation. When called with a model name, delete all entries for that model. When called without arguments, delete all entries. Return the count of invalidated entries. Use storage backend's `query` and `delete` methods. | Status: not_done
+- [x] **Implement `cache.invalidate(model?)`** — In `cache.ts`, implement manual invalidation. When called with a model name, delete all entries for that model. When called without arguments, delete all entries. Return the count of invalidated entries. Use storage backend's `query` and `delete` methods. | Status: done
 
-- [ ] **Implement `createCache` factory function** — In `cache.ts` or `index.ts`, implement the `createCache(options?)` factory that constructs and returns a `ResponseCache` instance with the provided options. | Status: not_done
+- [x] **Implement `createCache` factory function** — In `cache.ts` or `index.ts`, implement the `createCache(options?)` factory that constructs and returns a `ResponseCache` instance with the provided options. | Status: done
 
 - [ ] **Implement built-in model prices** — In `cache.ts` or a separate `prices.ts`, define the built-in default model prices: `gpt-4o` (2.50/10.00), `gpt-4o-mini` (0.15/0.60), `gpt-4-turbo` (10.00/30.00), `gpt-3.5-turbo` (0.50/1.50), `claude-sonnet-4-20250514` (3.00/15.00), `claude-3-5-sonnet-20241022` (3.00/15.00), `claude-3-haiku-20240307` (0.25/1.25). Use as fallback when user does not provide `modelPrices`. Default fallback for unknown models: `{ input: 1.00, output: 2.00 }` per million tokens. | Status: not_done
 
-- [ ] **Write cache.test.ts** — Create `src/__tests__/cache.test.ts`. Test cases: create cache with default options, `set` stores entry and returns cache key, `get` returns cached response on hit, `get` returns null on miss, `get` increments hit counter and `get`-miss increments miss counter, `delete` removes entry, `clear` removes all entries, `clear` with model filter, `has` returns true/false without updating stats, `invalidate` with model removes only that model's entries, `invalidate` without model removes all entries and returns count, TTL expiry causes `get` to return null, LRU eviction removes least recently used entry, identical requests produce cache hits, different temperature/model/max_tokens produce cache misses. | Status: not_done
+- [x] **Write cache.test.ts** — Create `src/__tests__/cache.test.ts`. Test cases: create cache with default options, `set` stores entry and returns cache key, `get` returns cached response on hit, `get` returns null on miss, `get` increments hit counter and `get`-miss increments miss counter, `delete` removes entry, `clear` removes all entries, `clear` with model filter, `has` returns true/false without updating stats, `invalidate` with model removes only that model's entries, `invalidate` without model removes all entries and returns count, TTL expiry causes `get` to return null, LRU eviction removes least recently used entry, identical requests produce cache hits, different temperature/model/max_tokens produce cache misses. | Status: done
 
 ---
 
@@ -110,13 +110,13 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 7: Cost-Savings Tracking and Statistics
 
-- [ ] **Implement stats tracking** — Create `src/stats.ts` with a `StatsTracker` class that maintains running counters: `hits`, `misses`, `tokensSaved`, `costSaved`. Provide methods to `recordHit(tokensSaved, costSaved)`, `recordMiss()`, and `reset()`. | Status: not_done
+- [x] **Implement stats tracking** — Create `src/stats.ts` with a `StatsTracker` class that maintains running counters: `hits`, `misses`, `tokensSaved`, `costSaved`. Provide methods to `recordHit(tokensSaved, costSaved)`, `recordMiss()`, and `reset()`. | Status: done
 
-- [ ] **Implement per-hit cost computation** — In `src/stats.ts`, implement cost computation for each cache hit: `inputTokens` from cached `usage.prompt_tokens` or estimated via `tokenEstimator(requestMessages)`, `outputTokens` from cached `usage.completion_tokens` or estimated via `tokenEstimator(responseText)`. Cost formula: `(inputTokens / 1_000_000 * inputPrice) + (outputTokens / 1_000_000 * outputPrice)`. Look up model price from configured `modelPrices`, built-in defaults, or fallback `{ input: 1.00, output: 2.00 }`. | Status: not_done
+- [x] **Implement per-hit cost computation** — In `src/stats.ts`, implement cost computation for each cache hit: `inputTokens` from cached `usage.prompt_tokens` or estimated via `tokenEstimator(requestMessages)`, `outputTokens` from cached `usage.completion_tokens` or estimated via `tokenEstimator(responseText)`. Cost formula: `(inputTokens / 1_000_000 * inputPrice) + (outputTokens / 1_000_000 * outputPrice)`. Look up model price from configured `modelPrices`, built-in defaults, or fallback `{ input: 1.00, output: 2.00 }`. | Status: done
 
-- [ ] **Implement token estimation** — In `src/stats.ts` or `cache.ts`, implement the default token estimator: `Math.ceil(text.length / 4)` (1 token per 4 characters heuristic). Support custom `tokenEstimator` function via config. For message arrays, serialize to text before estimating. | Status: not_done
+- [x] **Implement token estimation** — In `src/stats.ts` or `cache.ts`, implement the default token estimator: `Math.ceil(text.length / 4)` (1 token per 4 characters heuristic). Support custom `tokenEstimator` function via config. For message arrays, serialize to text before estimating. | Status: done
 
-- [ ] **Implement `cache.stats(options?)`** — In `cache.ts`, implement the `stats` method returning `CacheStats`: `hits`, `misses`, `hitRate` (hits / (hits + misses), 0 if no lookups), `entries` (total count from backend), `tokensSaved`, `costSaved`, `entriesByModel` (from backend's `sizeByModel`), `modelVersions` (from version registry), `staleEntries` (count of stale entries from backend query). Support optional `model` filter to return model-specific stats. | Status: not_done
+- [x] **Implement `cache.stats(options?)`** — In `cache.ts`, implement the `stats` method returning `CacheStats`: `hits`, `misses`, `hitRate` (hits / (hits + misses), 0 if no lookups), `entries` (total count from backend), `tokensSaved`, `costSaved`, `entriesByModel` (from backend's `sizeByModel`), `modelVersions` (from version registry), `staleEntries` (count of stale entries from backend query). Support optional `model` filter to return model-specific stats. | Status: done
 
 - [ ] **Implement `cache.resetStats()`** — In `cache.ts`, implement resetting hit/miss/cost counters to zero without clearing cache entries. Useful for periodic reporting (e.g., daily stats). | Status: not_done
 
@@ -126,15 +126,15 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 8: Cache-Through Wrapper
 
-- [ ] **Implement Proxy-based wrapper** — Create `src/wrapper/wrap.ts` with the `wrap<T>(client: T, options?: WrapOptions): T` method. Use JavaScript `Proxy` to intercept method calls on the client object. Detect client type automatically (OpenAI by presence of `client.chat.completions.create`, Anthropic by `client.messages.create`) or use `clientType` from `WrapOptions`. Support custom clients via `extractParams` and `buildResponse` functions. | Status: not_done
+- [x] **Implement Proxy-based wrapper** — Create `src/wrapper/wrap.ts` with the `wrap<T>(client: T, options?: WrapOptions): T` method. Use JavaScript `Proxy` to intercept method calls on the client object. Detect client type automatically (OpenAI by presence of `client.chat.completions.create`, Anthropic by `client.messages.create`) or use `clientType` from `WrapOptions`. Support custom clients via `extractParams` and `buildResponse` functions. | Status: done
 
-- [ ] **Implement OpenAI client adapter** — Create `src/wrapper/openai.ts` with functions to: extract cacheable parameters from an OpenAI `chat.completions.create` call (messages, model, temperature, top_p, max_tokens, etc., excluding stream/user/n), reconstruct an OpenAI-format response object from a `CacheHit` (with `id: 'cache-<hash>'`, `object: 'chat.completion'`, `choices`, `usage` zeroed, `_cached: true`, `_cacheKey`, `_cachedAt`), and extract the resolved model version from an OpenAI response's `model` field. | Status: not_done
+- [x] **Implement OpenAI client adapter** — Create `src/wrapper/openai.ts` with functions to: extract cacheable parameters from an OpenAI `chat.completions.create` call (messages, model, temperature, top_p, max_tokens, etc., excluding stream/user/n), reconstruct an OpenAI-format response object from a `CacheHit` (with `id: 'cache-<hash>'`, `object: 'chat.completion'`, `choices`, `usage` zeroed, `_cached: true`, `_cacheKey`, `_cachedAt`), and extract the resolved model version from an OpenAI response's `model` field. | Status: done
 
 - [ ] **Implement Anthropic client adapter** — Create `src/wrapper/anthropic.ts` with functions to: extract cacheable parameters from an Anthropic `messages.create` call, reconstruct an Anthropic-format response object from a `CacheHit` (with `id: 'cache-<hash>'`, `type: 'message'`, `role: 'assistant'`, `content: [{ type: 'text', text }]`, `usage` zeroed, `stop_reason`, `_cached: true`), and extract model version from Anthropic response metadata. | Status: not_done
 
-- [ ] **Implement wrapper cache-hit flow** — In `wrap.ts`, on intercepted call: extract params, compute cache key, check cache. On hit: construct response object via adapter's `buildResponse`, record hit stats, return cached response immediately. | Status: not_done
+- [x] **Implement wrapper cache-hit flow** — In `wrap.ts`, on intercepted call: extract params, compute cache key, check cache. On hit: construct response object via adapter's `buildResponse`, record hit stats, return cached response immediately. | Status: done
 
-- [ ] **Implement wrapper cache-miss flow** — In `wrap.ts`, on cache miss: delegate to the original client method, extract resolved model version from the response, extract response text and usage from the response, call `cache.set` with the response data, record miss stats, return the original response to the caller. | Status: not_done
+- [x] **Implement wrapper cache-miss flow** — In `wrap.ts`, on cache miss: delegate to the original client method, extract resolved model version from the response, extract response text and usage from the response, call `cache.set` with the response data, record miss stats, return the original response to the caller. | Status: done
 
 - [ ] **Implement streaming cache miss handling** — Create `src/wrapper/stream.ts`. On a cache miss with `stream: true`: delegate to the original client with `stream: true`, return an async iterable to the caller that yields chunks as they arrive from the LLM, internally buffer the full response content as chunks arrive, on stream completion assemble the full response and cache it. If the stream is interrupted before completion, do not cache anything. | Status: not_done
 
@@ -168,7 +168,7 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 10: Serialization
 
-- [ ] **Implement `cache.serialize()`** — Create `src/serialization.ts` with logic to serialize the entire cache state to a binary buffer. Format: header with magic bytes (`LRCACHE`), format version, entry count; entry table with key, request parameters (JSON), response text (UTF-8), model, resolved model, version, timestamps, usage, metadata for each entry; stats block with cumulative hit/miss/cost counters. | Status: not_done
+- [x] **Implement `cache.serialize()`** — Create `src/serialization.ts` with logic to serialize the entire cache state to a binary buffer. Format: header with magic bytes (`LRCACHE`), format version, entry count; entry table with key, request parameters (JSON), response text (UTF-8), model, resolved model, version, timestamps, usage, metadata for each entry; stats block with cumulative hit/miss/cost counters. | Status: done
 
 - [ ] **Implement `ResponseCache.deserialize(buffer, options?)`** — In `src/serialization.ts`, implement a static method on `ResponseCache` that reads a serialized buffer, validates the header (magic bytes, format version), reconstructs all cache entries, restores stats counters, and returns a new `ResponseCache` instance configured with the provided options (storage backend, maxEntries, etc.). | Status: not_done
 
@@ -198,9 +198,9 @@ This file tracks all implementation tasks derived from SPEC.md. Tasks are groupe
 
 ## Phase 12: Integration Tests
 
-- [ ] **End-to-end cache hit test** — Create cache, set entry with known messages/model/params/response, get with identical parameters, verify hit with correct response text, cached=true, correct model version. | Status: not_done
+- [x] **End-to-end cache hit test** — Create cache, set entry with known messages/model/params/response, get with identical parameters, verify hit with correct response text, cached=true, correct model version. | Status: done
 
-- [ ] **End-to-end cache miss test** — Create cache, get with parameters not in cache, verify null return, verify miss counter incremented. | Status: not_done
+- [x] **End-to-end cache miss test** — Create cache, get with parameters not in cache, verify null return, verify miss counter incremented. | Status: done
 
 - [ ] **Parameter sensitivity test** — Set an entry, then get with each output-affecting parameter changed one at a time (temperature, model, max_tokens, tools, response_format, top_p, frequency_penalty, presence_penalty, seed, stop, logit_bias, tool_choice). Verify each produces a different key and a cache miss. | Status: not_done
 
