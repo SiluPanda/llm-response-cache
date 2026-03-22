@@ -3,6 +3,7 @@
 Prompt-hash-keyed LLM response cache with model-aware invalidation, O(1) LRU eviction, and TTL support. Zero runtime dependencies.
 
 [![npm version](https://img.shields.io/npm/v/llm-response-cache.svg)](https://www.npmjs.com/package/llm-response-cache)
+[![npm downloads](https://img.shields.io/npm/dt/llm-response-cache.svg)](https://www.npmjs.com/package/llm-response-cache)
 [![license](https://img.shields.io/npm/l/llm-response-cache.svg)](https://github.com/SiluPanda/llm-response-cache/blob/master/LICENSE)
 [![node](https://img.shields.io/node/v/llm-response-cache.svg)](https://nodejs.org)
 
