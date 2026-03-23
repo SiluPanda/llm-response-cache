@@ -61,6 +61,17 @@ export class LRUStore {
     return node.value;
   }
 
+  peek(key: string): CacheEntry | null {
+    const node = this.map.get(key);
+    if (!node) return null;
+    if (this.isExpired(node.value)) {
+      this.removeNode(node);
+      this.map.delete(key);
+      return null;
+    }
+    return node.value;
+  }
+
   set(key: string, entry: CacheEntry): void {
     if (this.map.has(key)) {
       const existing = this.map.get(key)!;
@@ -120,12 +131,20 @@ export class LRUStore {
 
   all(): CacheEntry[] {
     const result: CacheEntry[] = [];
+    const expired: LRUNode[] = [];
     let node = this.head.next;
     while (node && node !== this.tail) {
-      if (!this.isExpired(node.value)) {
+      const next = node.next;
+      if (this.isExpired(node.value)) {
+        expired.push(node);
+      } else {
         result.push(node.value);
       }
-      node = node.next;
+      node = next;
+    }
+    for (const n of expired) {
+      this.removeNode(n);
+      this.map.delete(n.key);
     }
     return result;
   }

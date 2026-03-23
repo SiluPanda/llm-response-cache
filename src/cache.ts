@@ -146,7 +146,7 @@ export function createCache(options?: ResponseCacheOptions): ResponseCache {
         hits,
         misses,
         hitRate: total > 0 ? hits / total : 0,
-        totalEntries: store.size(),
+        totalEntries: entries.length,
         tokensSaved,
         estimatedCostSaved,
       };
@@ -167,7 +167,7 @@ export function createCache(options?: ResponseCacheOptions): ResponseCache {
     },
 
     has(key: string): boolean {
-      return store.get(key) !== null;
+      return store.peek(key) !== null;
     },
 
     getByKey(key: string): CacheEntry | null {
