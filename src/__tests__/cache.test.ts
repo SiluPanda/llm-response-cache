@@ -118,6 +118,20 @@ describe('stats', () => {
     cache.set(msgs, 'gpt-4', undefined, response);
     expect(cache.stats().totalEntries).toBe(1);
   });
+
+  it('stats().totalEntries excludes expired entries', () => {
+    vi.useFakeTimers();
+    const cache = createCache({ eviction: { ttlMs: 100 } });
+    const resp = { content: 'hi', model: 'gpt-4', usage: {} };
+    cache.set([{ role: 'user' as const, content: 'test' }], 'gpt-4', undefined, resp);
+
+    expect(cache.stats().totalEntries).toBe(1);
+
+    vi.advanceTimersByTime(101);
+
+    expect(cache.stats().totalEntries).toBe(0);
+    vi.useRealTimers();
+  });
 });
 
 describe('invalidate', () => {
@@ -169,6 +183,26 @@ describe('delete / has', () => {
   it('delete returns false for unknown key', () => {
     const cache = createCache();
     expect(cache.delete('nonexistent')).toBe(false);
+  });
+
+  it('has() does not affect LRU eviction order', () => {
+    const cache = createCache({ eviction: { maxEntries: 2 } });
+    const msgs1 = [{ role: 'user' as const, content: 'first' }];
+    const msgs2 = [{ role: 'user' as const, content: 'second' }];
+    const resp = { content: 'hi', model: 'gpt-4', usage: {} };
+
+    cache.set(msgs1, 'gpt-4', undefined, resp);
+    cache.set(msgs2, 'gpt-4', undefined, resp);
+
+    // has() should NOT move 'first' to MRU, so adding a third should evict 'first'
+    cache.has(buildKey(msgs1, 'gpt-4'));
+
+    const msgs3 = [{ role: 'user' as const, content: 'third' }];
+    cache.set(msgs3, 'gpt-4', undefined, resp);
+
+    // 'first' should have been evicted (LRU), not 'second'
+    expect(cache.get(msgs1, 'gpt-4')).toBeNull();
+    expect(cache.get(msgs2, 'gpt-4')).not.toBeNull();
   });
 });
 
