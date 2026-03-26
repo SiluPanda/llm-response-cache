@@ -109,7 +109,7 @@ export function createCache(options?: ResponseCacheOptions): ResponseCache {
                           const cached = cache.get(messages, model, params);
                           if (cached) return cached.response;
                           const createFn = (cpt as Record<string, (...a: unknown[]) => unknown>)['create'];
-                          const result = await createFn(...args);
+                          const result = await createFn.apply(cpt, args);
                           cache.set(messages, model, params, doExtractResponse(result));
                           return result;
                         };
