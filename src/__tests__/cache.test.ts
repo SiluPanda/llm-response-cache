@@ -272,6 +272,31 @@ describe('size', () => {
 });
 
 describe('wrap', () => {
+  it('preserves this binding when calling create through the proxy', async () => {
+    const cache = createCache();
+    const completions = {
+      _config: { baseURL: 'https://api.openai.com' },
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      create: vi.fn(async function (this: typeof completions, _params: unknown) {
+        // Simulate a real SDK method that relies on this context
+        if (!this._config) {
+          throw new Error('this context lost: _config is undefined');
+        }
+        return {
+          choices: [{ message: { content: `Response from ${this._config.baseURL}` } }],
+          model: 'gpt-4',
+          usage: { prompt_tokens: 10, completion_tokens: 5 },
+        };
+      }),
+    };
+    const fakeClient = { chat: { completions } };
+    const wrapped = cache.wrap(fakeClient);
+    const params = { messages: msgs, model: 'gpt-4' };
+    const result = await wrapped.chat.completions.create(params);
+    expect(result).toBeDefined();
+    expect(completions.create).toHaveBeenCalledTimes(1);
+  });
+
   it('returns cached response on second call', async () => {
     const cache = createCache();
     const fakeCreate = vi.fn().mockResolvedValue({
